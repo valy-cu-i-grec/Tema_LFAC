@@ -1,0 +1,13 @@
+a.out
+limbaj
+
+lex.yy.c
+*tab.c
+*tab.h
+*.output
+
+*.o
+
+*~
+.DS_Store
+.vscode/

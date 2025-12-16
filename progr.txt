@@ -1,0 +1,12 @@
+int numarInt;
+int function(int x,int y);
+float numarFloat;
+char caracter;
+string sirDeCaractere;
+begin_progr
+numarInt:=7;
+numarFloat:=3.14 + x;
+caracter:=a;
+sirDeCaractere:=Valentin;
+function(3,5);
+end_progr
