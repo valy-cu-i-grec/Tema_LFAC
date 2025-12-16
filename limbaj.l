@@ -18,6 +18,10 @@ extern SymTable* current;
 "." {return DOT;}
 "if" {return IF;}
 "while" {return WHILE;}
+\"[a-zA-Z0-9 ]*\" { 
+    yylval.Str = new std::string(yytext);
+    return STRING;
+}
 [a-zA-Z][a-zA-Z0-9]* {
     
     yylval.Str = new std::string(yytext);
@@ -26,7 +30,7 @@ extern SymTable* current;
     {
         std::string type = current->getType(yylval.Str);
 
-        if(type == "int" || type == "float")
+        if(type == "int" || type == "float" || type == "string" || type == "char")
         {
             return ID_ARITH;
         }
@@ -39,7 +43,7 @@ extern SymTable* current;
     return ID;
 }
 ":=" {return ASSIGN;}
-[0-9]+ {return NR;}
+[1-9]+[0-9]* | 0 {return NR;}
 [0-9]+[.][0-9]+ {return NR_FLOAT;}
 "==" {return EQ;}
 "!=" {return NEQ;}

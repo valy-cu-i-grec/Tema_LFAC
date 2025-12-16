@@ -30,7 +30,7 @@ int errorCount = 0;
 %left '+' '-' 
 %left '*'
 
-%token  BGIN END ASSIGN NR NR_FLOAT PRINT CLASS DOT IF WHILE
+%token  BGIN END ASSIGN NR NR_FLOAT PRINT CLASS DOT IF WHILE CHAR STRING
 %token<Str> ID TYPE BOOL_VAL ID_ARITH ID_BOOL 
 %type<Str> token_id
 %start progr
@@ -72,7 +72,7 @@ decl       :  TYPE token_id ';' {
                                    yyerror("Variable already defined");
                               }
                           }
-              | TYPE ID  '(' list_param ')' ';'
+              | TYPE token_id  '(' list_param ')' ';'
               | ID ID ';'
               {
                if(current->existsClass($1))
@@ -135,6 +135,8 @@ e_arith : e_arith '+' e_arith
         | '(' e_arith ')'
         | NR
         | NR_FLOAT
+        | CHAR
+        | STRING
         | ID_ARITH            
         | ID_ARITH DOT ID    
         ;
@@ -153,8 +155,20 @@ e_logic : e_logic AND e_logic
         | e_arith GE e_arith
         ;
 
-statement : ID_ARITH ASSIGN e_arith  
-          | ID_BOOL ASSIGN e_logic  
+statement : ID_ARITH ASSIGN e_arith  | ID_ARITH ASSIGN ID
+          | ID_BOOL ASSIGN e_logic
+          /* ADAUGA ACESTE LINII PENTRU A REPARA EROAREA DE LA LINIA 25 */
+          | ID ASSIGN token_id       // Permite: caracter:=a; sau sir:=Valentin;
+          | ID ASSIGN NR             // Permite assignment numeric pe ID generic daca e cazul
+          | ID ASSIGN BOOL_VAL       
+          | token_id DOT ID ASSIGN token_id // Permite: noua.Bomb := Sexi;
+          | token_id DOT ID ASSIGN BOOL_VAL // Permite: noua.catau := false;
+          //| token_id DOT ID ASSIGN e_arith
+          
+          /* ADAUGA ACESTE LINII PENTRU A REPARA APELUL DE FUNCTII (LINIA 28) */
+          | ID '(' call_list ')'     // Permite: function(3,5);
+          | ID '(' ')'               // Permite funcții fără parametri: function();
+
           | IF '(' e_logic ')' '{' list '}' 
           | WHILE '(' e_logic ')' '{' list '}'
           | PRINT '(' e_arith ')'
@@ -179,4 +193,3 @@ int main(int argc, char** argv){
      current->printVars();
      delete current;
 } 
-

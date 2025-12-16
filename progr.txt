@@ -1,5 +1,4 @@
 int numarInt;
-int function(int x,int y);
 float numarFloat;
 char caracter;
 string sirDeCaractere;
@@ -15,9 +14,8 @@ int function(int x, int y)
 { 
 int z;
 int h;
-x:=z
+x:=z;
 }
-
 
 begin_progr
 
@@ -25,12 +23,10 @@ numarInt:=7;
 numarFloat:=3.14 + x;
 caracter:=a;
 varBool := true;
-sirDeCaractere:=Valentin;
+sirDeCaractere:="Valentin";
 function(3,5);
-noua.Bomb := Sexi;
-noua.catau := false;
 
-if(noua.catau == varBool){ sirDeCaractere:=AmVerificat; };
+if( 3 < 5){ sirDeCaractere:="AmVerificat"; };
 
 while(numarInt >= 0) { numarInt := numarInt - 1; };
 
