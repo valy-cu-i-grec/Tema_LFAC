@@ -3,10 +3,35 @@ int function(int x,int y);
 float numarFloat;
 char caracter;
 string sirDeCaractere;
+bool varBool;
+
+class Camera{
+    string Bomb;
+    bool catau;
+};
+Camera noua;
+
+int function(int x, int y)
+{ 
+int z;
+int h;
+x:=z
+}
+
+
 begin_progr
+
 numarInt:=7;
 numarFloat:=3.14 + x;
 caracter:=a;
+varBool := true;
 sirDeCaractere:=Valentin;
 function(3,5);
+noua.Bomb := Sexi;
+noua.catau := false;
+
+if(noua.catau == varBool){ sirDeCaractere:=AmVerificat; };
+
+while(numarInt >= 0) { numarInt := numarInt - 1; };
+
 end_progr
