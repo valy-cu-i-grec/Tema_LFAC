@@ -18,15 +18,15 @@ x:=z;
 }
 
 begin_progr
-
+noua.Bomb:="Sexi";
 numarInt:=7;
 numarFloat:=3.14 + x;
 caracter:=a;
 varBool := true;
 sirDeCaractere:="Valentin";
 function(3,5);
-
-if( 3 < 5){ sirDeCaractere:="AmVerificat"; };
+numarInt:=numarInt+varBool;
+if( noua.catau==true){ sirDeCaractere:="AmVerificat"; };
 
 while(numarInt >= 0) { numarInt := numarInt - 1; };
 

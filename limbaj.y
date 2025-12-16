@@ -1,4 +1,3 @@
-
 %code requires {
   #include <string>
   using namespace std;
@@ -20,176 +19,148 @@ int errorCount = 0;
      std::string* Str;
 }
 
-//%destructor { delete $$; } <Str> 
-
-
+/* PRIORITATI OPERATORI */
 %left OR
 %left AND
 %left EQ NEQ
 %left LT LE GT GE
 %left '+' '-' 
-%left '*'
+%left '*' '/'
+%left DOT 
 
-%token  BGIN END ASSIGN NR NR_FLOAT PRINT CLASS DOT IF WHILE CHAR STRING
+/* TOKENI */
+%token BGIN END ASSIGN NR NR_FLOAT PRINT CLASS DOT IF WHILE CHAR STRING
 %token<Str> ID TYPE BOOL_VAL ID_ARITH ID_BOOL 
 %type<Str> token_id
+
 %start progr
+
 %%
-progr :  declarations main {if (errorCount == 0) cout<< "The program is correct!" << endl;}
+
+/* --- STRUCTURA PROGRAM --- */
+progr : global_definitions main_block 
+        { 
+            if (errorCount == 0) cout<< "The program is correct!" << endl; 
+        }
       ;
 
-declarations : decl           
-	      | declarations decl  
-           | class_declaration
-           | declarations class_declaration
-           | function_declaration
-           | declarations function_declaration
-	      ;
+global_definitions : /* empty */
+                   | global_definitions global_def
+                   ;
 
-class_declaration : CLASS token_id '{' declarations '}' ';'
-                    {
-                         current->addClass($2);
-                    }
-                  ;
-
-function_declaration : TYPE token_id '(' list_param ')' '{' func_body '}'
-                    ;
-
-func_body :list
-          | local_declaration list
-          ;
-
-local_declaration : decl
-                  | local_declaration decl
-
-decl       :  TYPE token_id ';' { 
-                              if(!current->existsId($2)) {
-                                    current->addVar($1,$2);
-                                    delete $1;
-                                    delete $2;
-                              } else {
-                                   errorCount++; 
-                                   yyerror("Variable already defined");
-                              }
-                          }
-              | TYPE token_id  '(' list_param ')' ';'
-              | ID ID ';'
-              {
-               if(current->existsClass($1))
-              {
-               if(!current->existsId($2))
-               {
-                    current->addVar($1, $2);
-                    delete $1; delete $2;
-               }
-               else
-               {
-                    errorCount++;
-                    yyerror("Variable already defined");
-               }
-              }
-              else
-              {
-               errorCount++;
-               char msg[100];
-               sprintf(msg, "Type '%s' is not defined (it is not a class)", $1->c_str());
-               yyerror(msg);
-              }
-              }
+global_def : class_definition
+           | function_definition
+           | global_var_definition
            ;
 
-list_param : param
-            | list_param ','  param 
-            ;
+/* --- DECLARATII --- */
+class_definition : CLASS token_id '{' declarations '}' ';'
+                   { current->addClass($2); }
+                 ;
 
-param : TYPE token_id { 
-     if(!current->existsId($2))
-     {
-          current->addVar($1,$2);
-          delete $1; delete $2;
-     }
-     else
-     {
-          errorCount++;
-          yyerror("Variable already defined!");
-     }
-}
+declarations : decl
+             | declarations decl
+             | function_definition
+             | declarations function_definition
+             ;
+
+global_var_definition : decl ;
+
+decl : TYPE token_id ';' 
+       { 
+           if(!current->existsId($2)) {
+               current->addVar($1,$2);
+               delete $1; delete $2;
+           } else {
+               errorCount++; 
+               yyerror("Variable already defined");
+           }
+       }
+     | TYPE token_id '(' list_param ')' ';' 
+     | ID ID ';'
+       {
+           if(current->existsClass($1)) {
+               if(!current->existsId($2)) {
+                   current->addVar($1, $2);
+                   delete $1; delete $2;
+               } else {
+                   errorCount++; yyerror("Variable already defined");
+               }
+           } else {
+               errorCount++; 
+               char msg[100]; sprintf(msg, "Type '%s' is not defined", $1->c_str()); yyerror(msg);
+           }
+       }
+     ;
+
+list_param : param | list_param ',' param ;
+
+param : TYPE token_id 
+      { 
+           if(!current->existsId($2)) { current->addVar($1,$2); delete $1; delete $2; }
+           else { errorCount++; yyerror("Variable already defined!"); }
+      }
       ; 
-      
 
-main : BGIN list END  
-     ;
-     
+function_definition : TYPE token_id '(' list_param ')' '{' func_body '}' ;
 
-list :  statement ';' 
-     | list statement ';'
-     ;
-
-token_id : ID
-          | ID_ARITH
-          | ID_BOOL
-
-e_arith : e_arith '+' e_arith
-        | e_arith '-' e_arith
-        | e_arith '*' e_arith
-        | '(' e_arith ')'
-        | NR
-        | NR_FLOAT
-        | CHAR
-        | STRING
-        | ID_ARITH            
-        | ID_ARITH DOT ID    
-        ;
-
-e_logic : e_logic AND e_logic
-        | e_logic OR e_logic
-        | '(' e_logic ')'
-        | BOOL_VAL
-        | ID_BOOL            
-        | ID_BOOL DOT ID
-        | e_arith EQ e_arith
-        | e_arith LT e_arith
-        | e_arith LE e_arith
-        | e_arith NEQ e_arith
-        | e_arith GT e_arith
-        | e_arith GE e_arith
-        ;
-
-statement : ID_ARITH ASSIGN e_arith  | ID_ARITH ASSIGN ID
-          | ID_BOOL ASSIGN e_logic
-          /* ADAUGA ACESTE LINII PENTRU A REPARA EROAREA DE LA LINIA 25 */
-          | ID ASSIGN token_id       // Permite: caracter:=a; sau sir:=Valentin;
-          | ID ASSIGN NR             // Permite assignment numeric pe ID generic daca e cazul
-          | ID ASSIGN BOOL_VAL       
-          | token_id DOT ID ASSIGN token_id // Permite: noua.Bomb := Sexi;
-          | token_id DOT ID ASSIGN BOOL_VAL // Permite: noua.catau := false;
-          //| token_id DOT ID ASSIGN e_arith
-          
-          /* ADAUGA ACESTE LINII PENTRU A REPARA APELUL DE FUNCTII (LINIA 28) */
-          | ID '(' call_list ')'     // Permite: function(3,5);
-          | ID '(' ')'               // Permite funcții fără parametri: function();
-
-          | IF '(' e_logic ')' '{' list '}' 
-          | WHILE '(' e_logic ')' '{' list '}'
-          | PRINT '(' e_arith ')'
-          | PRINT '(' e_logic ')'
+func_body : statement_list
+          | local_declarations statement_list
           ;
 
-call_list : e_arith
-          | call_list ',' e_arith
-          | e_logic
-          | call_list ',' e_logic
+local_declarations : decl | local_declarations decl ;
+
+main_block : BGIN statement_list END ;
+
+/* --- INSTRUCTIUNI --- */
+statement_list : statement ';' | statement_list statement ';' ;
+
+statement : token_id ASSIGN expression
+          | token_id DOT token_id ASSIGN expression  /* Permite obj.x := ... */
+          | token_id '(' call_list ')'     
+          | token_id '(' ')'
+          | IF '(' expression ')' '{' statement_list '}' 
+          | WHILE '(' expression ')' '{' statement_list '}'
+          | PRINT '(' expression ')'
           ;
+
+call_list : expression | call_list ',' expression ;
+
+/* --- EXPRESII UNIFICATE --- */
+/* Rezolva conflictele generate de lexerul care intoarce ID_ARITH/ID_BOOL */
+token_id : ID | ID_ARITH | ID_BOOL ;
+
+expression : expression '+' expression
+           | expression '-' expression
+           | expression '*' expression
+           | expression '/' expression
+           | '(' expression ')'
+           | expression AND expression
+           | expression OR expression
+           | expression EQ expression
+           | expression NEQ expression
+           | expression LT expression
+           | expression LE expression
+           | expression GT expression
+           | expression GE expression
+           | NR | NR_FLOAT | CHAR | STRING | BOOL_VAL
+           | token_id
+           | token_id DOT token_id
+           | token_id '(' call_list ')'
+           | token_id '(' ')'
+           ;
+
 %%
 void yyerror(const char * s){
-     cout << "error:" << s << " at line: " << yylineno << endl;
+     cout << "error: " << s << " at line: " << yylineno << endl;
 }
 
 int main(int argc, char** argv){
-     yyin=fopen(argv[1],"r");
+     if(argc > 1) yyin=fopen(argv[1],"r");
+     else yyin = stdin;
      current = new SymTable("global");
      yyparse();
      cout << "Variables:" <<endl;
      current->printVars();
      delete current;
-} 
+}
