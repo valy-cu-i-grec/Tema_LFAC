@@ -19,6 +19,7 @@ extern SymTable* current;
 "class"       { return CLASS; }
 "."           { return DOT; }
 "if"          { return IF; }
+"else"        {return ELSE;}
 "while"       { return WHILE; }
 
 \"[a-zA-Z0-9 ]*\" { 

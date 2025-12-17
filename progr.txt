@@ -26,8 +26,12 @@ varBool := true;
 sirDeCaractere:="Valentin";
 function(3,5);
 numarInt:=numarInt+varBool;
-if( noua.catau==true){ sirDeCaractere:="AmVerificat"; };
+if( noua.catau==true){ sirDeCaractere:="AmVerificat"; } else sirDeCaractere:="NuAmVerificat";
+
+if(noua.Bomb=="Sexi"){caracter:=S;} else if(noua.Bomb=="sexi"){caracter:=s;} else caracter:=n;
 
 while(numarInt >= 0) { numarInt := numarInt - 1; };
+
+Print(2+3);
 
 end_progr

@@ -29,7 +29,7 @@ int errorCount = 0;
 %left DOT 
 
 /* TOKENI */
-%token BGIN END ASSIGN NR NR_FLOAT PRINT CLASS DOT IF WHILE CHAR STRING
+%token BGIN END ASSIGN NR NR_FLOAT PRINT CLASS IF WHILE CHAR STRING ELSE
 %token<Str> ID TYPE BOOL_VAL ID_ARITH ID_BOOL 
 %type<Str> token_id
 
@@ -119,7 +119,7 @@ statement : token_id ASSIGN expression
           | token_id DOT token_id ASSIGN expression  /* Permite obj.x := ... */
           | token_id '(' call_list ')'     
           | token_id '(' ')'
-          | IF '(' expression ')' '{' statement_list '}' 
+          | IF '(' expression ')' '{' statement_list '}' ELSE statement
           | WHILE '(' expression ')' '{' statement_list '}'
           | PRINT '(' expression ')'
           ;
