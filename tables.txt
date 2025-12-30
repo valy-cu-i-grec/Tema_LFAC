@@ -1,0 +1,32 @@
+Symbol Table: class_Camera
+Parent Scope: global
+Name: Bomb | Kind: Variable | Type: string
+Name: catau | Kind: Variable | Type: bool
+
+Symbol Table: func_function
+Parent Scope: global
+Name: h | Kind: Variable | Type: int
+Name: x | Kind: Variable | Type: int
+Name: y | Kind: Variable | Type: int
+Name: z | Kind: Variable | Type: int
+
+Symbol Table: global
+Parent Scope: NULL
+Name: caracter | Kind: Variable | Type: char
+Name: function | Kind: Function | RetType: int
+Name: noua | Kind: Variable | Type: Camera
+Name: numarFloat | Kind: Variable | Type: float
+Name: numarInt | Kind: Variable | Type: int
+Name: sirDeCaractere | Kind: Variable | Type: string
+Name: varBool | Kind: Variable | Type: bool
+
+Symbol Table: global
+Parent Scope: NULL
+Name: caracter | Kind: Variable | Type: char
+Name: function | Kind: Function | RetType: int
+Name: noua | Kind: Variable | Type: Camera
+Name: numarFloat | Kind: Variable | Type: float
+Name: numarInt | Kind: Variable | Type: int
+Name: sirDeCaractere | Kind: Variable | Type: string
+Name: varBool | Kind: Variable | Type: bool
+
