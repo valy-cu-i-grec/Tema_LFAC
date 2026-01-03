@@ -1,28 +1,31 @@
+%code requires {
+  #include <string>
+  #include <vector>
+  using namespace std;
+}
+
 %{
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <map>
+#include <vector>
 #include "SymTable.h"
 
-extern FILE* yyin;
-extern char* yytext;
-extern int yylineno;
+// Declaram externalele necesare
 extern int yylex();
 void yyerror(const char * s);
+extern SymTable* current; // Pointerul catre tabela curenta (definit in main.cpp)
 
-class SymTable* current;
-std::map<std::string, SymTable*> classScopes;
-int errorCount = 0;
-
-// Functie auxiliara
-bool is_numeric(string type) {
-    return type == "int" || type == "float";
+// Helper pentru formatare erori
+void reportError(const char* fmt, string s1, string s2 = "") {
+    char msg[200];
+    sprintf(msg, fmt, s1.c_str(), s2.c_str());
+    yyerror(msg);
 }
 %}
 
 %union {
-     std::string* Str;
+     std::string* strVal;
+     std::vector<std::string>* argsVal; // Atribut pentru liste de parametri
 }
 
 %left OR
@@ -34,21 +37,20 @@ bool is_numeric(string type) {
 %left DOT 
 
 %token BGIN END ASSIGN NR NR_FLOAT PRINT CLASS IF WHILE CHAR STRING ELSE
-%token<Str> ID TYPE BOOL_VAL 
-%type<Str> token_id expression call_list
+%token<strVal> ID TYPE BOOL_VAL 
+%type<strVal> token_id expression 
+%type<strVal> func_header class_header param
+%type<argsVal> call_list list_param 
 
 %start progr
 
 %%
 
 progr : global_definitions main_block 
-        { 
-            if (errorCount == 0) cout<< "The program is correct!" << endl; 
-            current->printTableToFile("tables.txt");
-        }
+        { std::cout << "The program is correct!" << std::endl; }
       ;
 
-global_definitions :
+global_definitions : /* empty */
                    | global_definitions global_def
                    ;
 
@@ -60,11 +62,11 @@ global_def : class_definition
 /* --- CLASE --- */
 class_header : CLASS token_id 
              { 
-                 current->addClass($2);
-                 string className = *$2;
-                 SymTable* newScope = new SymTable("class_" + className, current);
-                 classScopes[className] = newScope;
+                 current->addClass(*$2);
+                 SymTable* newScope = new SymTable("class_" + *$2, current);
+                 SymTable::addClassScope(*$2, newScope);
                  current = newScope;
+                 $$ = $2; 
              }
              ;
 
@@ -76,12 +78,13 @@ class_definition : class_header '{' declarations '}' ';'
                  ;
 
 /* --- DECLARATII SI FUNCTII --- */
-/* Regula comuna pentru antetul functiei (prototip sau definitie) */
-/* Aceasta regula creeaza automat scopul nou */
+
+/* func_header creeaza scope-ul SI returneaza numele functiei */
 func_header : TYPE token_id '(' 
             {
-                 current->addFunc($1, $2);
+                 current->addFunc(*$1, *$2);
                  current = new SymTable("func_" + *$2, current);
+                 $$ = $2; 
             }
             ;
 
@@ -95,64 +98,73 @@ global_var_definition : decl ;
 
 decl : TYPE token_id ';' 
        { 
-           if(!current->existsId($2)) {
-               current->addVar($1, $2);
+           if(!current->addVar(*$1, *$2)) reportError("Variable '%s' already defined", *$2);
+           delete $1; delete $2;
+       }
+     | ID ID ';' // Declarare obiect clasa
+       {
+           if(SymTable::getClassScope(*$1)) {
+               if(!current->addVar(*$1, *$2)) reportError("Variable '%s' already defined", *$2);
                delete $1; delete $2;
            } else {
-               errorCount++;
-               yyerror("Variable already defined");
+               reportError("Type '%s' is not defined", *$1);
            }
        }
-     | ID ID ';'
-       {
-           if(current->existsClass($1)) {
-               if(!current->existsId($2)) {
-                   current->addVar($1, $2);
-                   delete $1; delete $2;
-               } else {
-                   errorCount++;
-                   yyerror("Variable already defined");
-               }
-           } else {
-               errorCount++;
-               char msg[100]; sprintf(msg, "Type '%s' is not defined", $1->c_str()); yyerror(msg);
-           }
-       }
-     /* PROTOTIPURI DE FUNCTII (folosind func_header) */
+     /* Prototipuri */
      | func_header list_param ')' ';' 
        {
-           // Doar am declarat, deci iesim din scopul creat de func_header
-           current = current->getParent();
+           current->getParent()->updateFuncParams(*$1, *$2);
+           delete $2; 
+           current = current->getParent(); 
        }
      | func_header ')' ';' 
        {
+           current->getParent()->updateFuncParams(*$1, vector<string>());
            current = current->getParent();
        }
      ;
 
-list_param : param 
-           | list_param ',' param 
-           ;
-
+/* Regula simpla pentru un parametru: il adauga in SymTable si returneaza tipul string */
 param : TYPE token_id 
-      { 
-           if(!current->existsId($2)) { 
-               current->addVar($1, $2);
-               delete $1; delete $2; 
-           } else { 
-               errorCount++; 
-               yyerror("Variable already defined!"); 
-           }
+      {
+           if(!current->addVar(*$1, *$2)) reportError("Parameter '%s' already defined", *$2);
+           $$ = new string(*$1); // Returnam tipul pentru a fi colectat in lista
+           delete $1; delete $2;
       }
       ;
 
-/* DEFINITIA FUNCTIEI (folosind func_header) */
-function_definition : func_header list_param ')' '{' func_body '}'
+/* Construim vectorul de tipuri folosind regula param */
+list_param : param 
+           { 
+             $$ = new vector<string>(); 
+             $$->push_back(*$1); 
+             delete $1;
+           }
+           | list_param ',' param 
+           { 
+             $$ = $1; 
+             $$->push_back(*$3); 
+             delete $3;
+           }
+           ;
+
+
+/* DEFINITIA FUNCTIEI */
+function_definition : func_header list_param ')' '{' 
+                    {
+                        current->getParent()->updateFuncParams(*$1, *$2);
+                        delete $2;
+                    }
+                    func_body '}'
                     {
                         current->printTableToFile("tables.txt");
                         current = current->getParent();
                     }
-                    | func_header ')' '{' func_body '}'
+                    | func_header ')' '{' 
+                    {
+                        current->getParent()->updateFuncParams(*$1, vector<string>());
+                    }
+                    func_body '}'
                     {
                         current->printTableToFile("tables.txt");
                         current = current->getParent();
@@ -171,108 +183,120 @@ statement_list : statement ';'
                | statement_list statement ';' 
                ;
 
-/* --- REGULI AJUTATOARE PENTRU IF/WHILE (evita conflictele) --- */
 if_check : IF '(' expression ')' 
-         {
-             if (*$3 != "bool") { errorCount++; yyerror("IF condition must be bool!"); }
-         }
+         { if (*$3 != "bool") yyerror("IF condition must be bool!"); delete $3; }
          ;
 
 while_check : WHILE '(' expression ')' 
-            {
-                if (*$3 != "bool") { errorCount++; yyerror("WHILE condition must be bool!"); }
-            }
+            { if (*$3 != "bool") yyerror("WHILE condition must be bool!"); delete $3; }
             ;
 
 statement : ID ASSIGN expression
           {
-              string varType = current->getType($1);
-              if(varType == "") { errorCount++; yyerror("Variable not defined!"); }
-              else if (varType != *$3) {
-                  errorCount++;
-                  char msg[100]; sprintf(msg, "Type mismatch. Cannot assign '%s' to '%s'", $3->c_str(), varType.c_str());
-                  yyerror(msg);
-              }
+              string varType = current->getType(*$1);
+              if(varType == "") reportError("Variable '%s' not defined", *$1);
+              else if (varType != *$3 && *$3 != "error") reportError("Cannot assign '%s' to '%s'", *$3, varType);
+              delete $1; delete $3;
           }
           | token_id DOT token_id ASSIGN expression  
           {
-               string objName = *$1;
-               string memName = *$3;
-               string objType = current->getType(&objName); 
-
-               if (classScopes.find(objType) != classScopes.end()) {
-                   SymTable* clsTable = classScopes[objType];
-                   string memType = clsTable->getType(&memName);
-                   
-                   if (memType == "") { errorCount++; yyerror("Member not found"); } 
-                   else if (memType != *$5) { errorCount++; yyerror("Type mismatch in member assignment"); }
-               } else {
-                   errorCount++; yyerror("Invalid object or class access");
-               }
+               string res = current->getMemberType(*$1, *$3);
+               if (res == "error_undef") reportError("Object '%s' not defined", *$1);
+               else if (res == "error_not_class") reportError("Variable '%s' is not an object", *$1);
+               else if (res == "error_member_missing") reportError("Member '%s' not found", *$3);
+               else if (res != *$5 && *$5 != "error") reportError("Type mismatch on member assignment: expected '%s', got '%s'", res, *$5);
+               delete $1; delete $3; delete $5;
           }
           | token_id '(' call_list ')'     
+          {
+              vector<string> expected = current->getFuncParams(*$1);
+              vector<string>* given = $3;
+              if (expected.size() != given->size()) reportError("Function '%s' arg count mismatch", *$1);
+              else {
+                  for(size_t i=0; i<expected.size(); ++i) 
+                      if(expected[i] != (*given)[i]) reportError("Arg %d type mismatch", to_string(i+1));
+              }
+              delete $1; delete $3;
+          }
           | token_id '(' ')'
-          /* Folosim regulile factorizate if_check / while_check */
+          {
+               if(current->getFuncParams(*$1).size() != 0) reportError("Function '%s' expects arguments", *$1);
+               delete $1;
+          }
           | if_check '{' statement_list '}' ELSE statement
           | if_check '{' statement_list '}' 
           | while_check '{' statement_list '}'
-          | PRINT '(' expression ')'
+          | PRINT '(' expression ')' { delete $3; }
           ;
 
 call_list : expression 
+          { 
+              $$ = new vector<string>(); 
+              $$->push_back(*$1); delete $1;
+          }
           | call_list ',' expression 
+          { 
+              $$ = $1; 
+              $$->push_back(*$3); delete $3;
+          }
           ;
 
 token_id : ID ;
 
 expression : expression '+' expression
              {
-                 if (is_numeric(*$1) && is_numeric(*$3)) {
-                     if (*$1 == "float" || *$3 == "float") $$ = new string("float");
-                     else $$ = new string("int");
-                 } else { errorCount++; yyerror("Invalid operands for +"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "+")) $$ = new string(*$1);
+                 else { yyerror("Type mismatch in +"); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
            | expression '-' expression
              {
-                 if (is_numeric(*$1) && is_numeric(*$3)) {
-                      if (*$1 == "float" || *$3 == "float") $$ = new string("float");
-                      else $$ = new string("int");
-                 } else { errorCount++; yyerror("Invalid operands for -"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "-")) $$ = new string(*$1);
+                 else { yyerror("Type mismatch in -"); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
            | expression '*' expression
              {
-                  if (is_numeric(*$1) && is_numeric(*$3)) {
-                      if (*$1 == "float" || *$3 == "float") $$ = new string("float");
-                      else $$ = new string("int");
-                 } else { errorCount++; yyerror("Invalid operands for *"); $$ = new string("error"); }
+                  if (SymTable::checkTypeCompatibility(*$1, *$3, "*")) $$ = new string(*$1);
+                  else { yyerror("Type mismatch in *"); $$ = new string("error"); }
+                  delete $1; delete $3;
              }
            | expression '/' expression
              {
-                 if (is_numeric(*$1) && is_numeric(*$3)) $$ = new string("float");
-                 else { errorCount++; yyerror("Invalid operands for /"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "/")) $$ = new string(*$1);
+                 else { yyerror("Type mismatch in /"); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
            | '(' expression ')' { $$ = $2; }
            
            | expression AND expression
              {
-                 if (*$1 == "bool" && *$3 == "bool") $$ = new string("bool");
-                 else { errorCount++; yyerror("&& requires bool"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "&&")) $$ = new string("bool");
+                 else { yyerror("&& requires bool"); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
            | expression OR expression
              {
-                 if (*$1 == "bool" && *$3 == "bool") $$ = new string("bool");
-                 else { errorCount++; yyerror("|| requires bool"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "||")) $$ = new string("bool");
+                 else { yyerror("|| requires bool"); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
            | expression EQ expression
              {
-                 if (*$1 == *$3) $$ = new string("bool");
-                 else { errorCount++; yyerror("Cannot compare different types"); $$ = new string("error"); }
+                 if (SymTable::checkTypeCompatibility(*$1, *$3, "==")) $$ = new string("bool");
+                 else { yyerror("Type mismatch in =="); $$ = new string("error"); }
+                 delete $1; delete $3;
              }
-           | expression NEQ expression { if(*$1 == *$3) $$ = new string("bool"); else $$ = new string("error"); }
-           | expression LT expression { if(is_numeric(*$1) && is_numeric(*$3)) $$ = new string("bool"); else $$ = new string("error"); }
-           | expression LE expression { if(is_numeric(*$1) && is_numeric(*$3)) $$ = new string("bool"); else $$ = new string("error"); }
-           | expression GT expression { if(is_numeric(*$1) && is_numeric(*$3)) $$ = new string("bool"); else $$ = new string("error"); }
-           | expression GE expression { if(is_numeric(*$1) && is_numeric(*$3)) $$ = new string("bool"); else $$ = new string("error"); }
+           | expression NEQ expression 
+             { if (SymTable::checkTypeCompatibility(*$1, *$3, "!=")) $$ = new string("bool"); else $$=new string("error"); delete $1; delete $3; }
+           | expression LT expression 
+             { if (SymTable::checkTypeCompatibility(*$1, *$3, "<")) $$ = new string("bool"); else $$=new string("error"); delete $1; delete $3; }
+           | expression LE expression 
+             { if (SymTable::checkTypeCompatibility(*$1, *$3, "<=")) $$ = new string("bool"); else $$=new string("error"); delete $1; delete $3; }
+           | expression GT expression 
+             { if (SymTable::checkTypeCompatibility(*$1, *$3, ">")) $$ = new string("bool"); else $$=new string("error"); delete $1; delete $3; }
+           | expression GE expression 
+             { if (SymTable::checkTypeCompatibility(*$1, *$3, ">=")) $$ = new string("bool"); else $$=new string("error"); delete $1; delete $3; }
 
            | NR       { $$ = new string("int"); }
            | NR_FLOAT { $$ = new string("float"); }
@@ -282,56 +306,37 @@ expression : expression '+' expression
            
            | ID 
              {
-                 string type = current->getType($1);
-                 if (type == "") { $$ = new string("error"); } 
+                 string type = current->getType(*$1);
+                 if (type == "") { reportError("Var '%s' undefined", *$1); $$ = new string("error"); } 
                  else { $$ = new string(type); }
+                 delete $1;
              }
            | token_id DOT token_id 
              { 
-                 string objName = *$1;
-                 string memName = *$3;
-                 string objType = current->getType(&objName);
-                 
-                 if (classScopes.find(objType) != classScopes.end()) {
-                     SymTable* clsTable = classScopes[objType];
-                     string memType = clsTable->getType(&memName);
-                     if (memType != "") $$ = new string(memType);
-                     else { errorCount++; yyerror("Member not found"); $$ = new string("error"); }
-                 } else {
-                     errorCount++; yyerror("Accessing member of unknown type");
-                     $$ = new string("error");
-                 }
+                 string type = current->getMemberType(*$1, *$3);
+                 if (type.find("error") != string::npos) { reportError("Member access error: %s", type); $$ = new string("error"); }
+                 else $$ = new string(type);
+                 delete $1; delete $3;
              }
            | token_id '(' call_list ')' 
              { 
-                 string funcType = current->getType($1);
-                 if(funcType != "") $$ = new string(funcType);
-                 else $$ = new string("unknown");
+                 string retType = current->getType(*$1);
+                 if(retType == "") { reportError("Func '%s' undefined", *$1); $$ = new string("error"); }
+                 else {
+                     // Check args
+                     vector<string> expected = current->getFuncParams(*$1);
+                     if(expected.size() != $3->size()) yyerror("Arg count mismatch");
+                     // Simplificare check
+                     $$ = new string(retType);
+                 }
+                 delete $1; delete $3;
              }
            | token_id '(' ')'
              {
-                 string funcType = current->getType($1);
-                 if(funcType != "") $$ = new string(funcType);
-                 else $$ = new string("unknown");
+                 string retType = current->getType(*$1);
+                 if(retType == "") { reportError("Func '%s' undefined", *$1); $$ = new string("error"); }
+                 else $$ = new string(retType);
+                 delete $1;
              }
            ;
-
 %%
-
-void yyerror(const char * s){
-     cout << "error: " << s << " at line: " << yylineno << endl;
-}
-
-int main(int argc, char** argv){
-     std::ofstream file("tables.txt");
-     file.close();
-
-     if(argc > 1) yyin=fopen(argv[1],"r");
-     else yyin = stdin;
-     
-     current = new SymTable("global");
-     yyparse();
-     
-     current->printTableToFile("tables.txt");
-     delete current;
-}
