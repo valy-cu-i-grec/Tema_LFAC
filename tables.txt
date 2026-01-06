@@ -8,7 +8,7 @@ Name: catau | Kind: Variable | Type: bool
 === Symbol Table: func_function ===
 Parent Scope: global
 -----------------------------------
-Name: h | Kind: Variable | Type: int
+Name: h | Kind: Variable | Type: float
 Name: x | Kind: Variable | Type: int
 Name: y | Kind: Variable | Type: int
 Name: z | Kind: Variable | Type: int

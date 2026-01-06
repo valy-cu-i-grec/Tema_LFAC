@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <string>
 #include "limbaj.tab.h"
-#include "SymTable.h"
 
-extern SymTable* current;
 %}
 
 %option noyywrap

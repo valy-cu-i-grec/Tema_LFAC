@@ -13,7 +13,7 @@ Camera noua;
 int function(int x, int y)
 { 
 int z;
-int h;
+float h;
 x:=z;
 }
 
@@ -30,7 +30,7 @@ if( noua.catau==true){ sirDeCaractere:="AmVerificat"; } else sirDeCaractere:="Nu
 
 if(noua.Bomb=="Sexi"){caracter:='S';} else if(noua.Bomb=="sexi"){caracter:='s';} else caracter:='n';
 
-while(numarInt+1) { numarInt := numarInt - 1; };
+while(numarInt+1 == 2) { numarInt := numarInt - 1; };
 
 Print(2+3);
 

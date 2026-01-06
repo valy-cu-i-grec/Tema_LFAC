@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include "Value.h"
 
 using namespace std;
 
@@ -15,6 +16,7 @@ class IdInfo {
     IdKind kind;
     string value;
     vector<string> paramTypes; 
+    Value currentVal; // <--- ADAUGĂ ASTA pentru a stoca valoarea la runtime
 
     IdInfo() {}
     IdInfo(string type, string name, IdKind kind, string value = "") 
@@ -58,10 +60,16 @@ public:
     
     // Functii de verificare statice (pentru a nu incarca .y)
     static bool isNumeric(string type);
+    static bool isInt(string type);
+    static bool isFloat(string type);
     static bool checkTypeCompatibility(string type1, string type2, string op);
 
     // Printing
     void printTableToFile(const string& filename);
+
+    //Pentru Value
+    void setValue(string name, Value v);
+    Value getValue(string name);
     
     ~SymTable();
 };
