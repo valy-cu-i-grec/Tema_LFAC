@@ -4,31 +4,72 @@
 #include <string>
 #include <iostream>
 
-class Value {
+class Value
+{
 public:
-    std::string type; // "int", "float", "bool", "string", "void"
-    
-    union {
+    std::string type;
+    bool isUnknown = false;
+
+    union
+    {
         int iVal;
         float fVal;
         bool bVal;
+        char cVal;
     } data;
-    
+
     std::string sVal;
 
-    // Constructori
-    Value() : type("void") {}
-    Value(std::string t) : type(t) {} // Constructorul cerut de profă: Value("int") ### NU INTELEG CE E ASTA TBH:)))
-    Value(int v) : type("int") { data.iVal = v; }
-    Value(float v) : type("float") { data.fVal = v; }
-    Value(bool v) : type("bool") { data.bVal = v; }
-    Value(std::string v) : type("string"), sVal(v) {}
+    // --- ADAUGĂ ACESTE DOUĂ METODE ---
 
-    void print() const {
-        if (type == "int") std::cout << data.iVal;
-        else if (type == "float") std::cout << data.fVal;
-        else if (type == "bool") std::cout << (data.bVal ? "true" : "false");
-        else if (type == "string") std::cout << sVal;
+    // 1. Copy Constructor
+    Value(const Value &other)
+    {
+        this->type = other.type;
+        this->isUnknown = other.isUnknown;
+        this->sVal = other.sVal;
+        this->data = other.data; // Copiază uniunea bit cu bit
+    }
+
+    // 2. Assignment Operator (Operatorul de atribuire)
+    Value &operator=(const Value &other)
+    {
+        if (this != &other)
+        {
+            this->type = other.type;
+            this->isUnknown = other.isUnknown;
+            this->sVal = other.sVal;
+            this->data = other.data;
+        }
+        return *this;
+    }
+
+    // ----------------------------------
+
+    // Constructorii tăi existenți rămân la fel
+    Value() : type("void"), isUnknown(false) {}
+    Value(std::string t, bool unknown) : type(t), isUnknown(unknown) {}
+    Value(int v) : type("int"), isUnknown(false) { data.iVal = v; }
+    Value(float v) : type("float"), isUnknown(false) { data.fVal = v; }
+    Value(bool v) : type("bool"), isUnknown(false) { data.bVal = v; }
+    Value(std::string v) : type("string"), sVal(v), isUnknown(false) {}
+    Value(const char* v) : type("string"), sVal(v), isUnknown(false) {}
+    Value(char v) : type("char"), isUnknown(false){ data.cVal = v; }
+
+    void print() const
+    {
+        if (type == "int")
+            std::cout << data.iVal;
+        else if (type == "float")
+            std::cout << data.fVal;
+        else if (type == "bool")
+            std::cout << (data.bVal ? "true" : "false");
+        else if (type == "string")
+            std::cout << sVal;
+        else if(type == "char")
+            std::cout<<data.cVal;
+        else if(type == "void")
+            std::cout<<"[Not evaluable]";
     }
 };
 

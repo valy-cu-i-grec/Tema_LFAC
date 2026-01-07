@@ -1,3 +1,6 @@
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -7,57 +10,64 @@
 
 using namespace std;
 
-enum IdKind { VARIABLE, FUNCTION, CLASS_NAME };
+enum IdKind
+{
+    VARIABLE,
+    FUNCTION,
+    CLASS_NAME
+};
 
-class IdInfo {
-    public:
+class IdInfo
+{
+public:
     string type;
     string name;
     IdKind kind;
     string value;
-    vector<string> paramTypes; 
+    vector<string> paramTypes;
     Value currentVal; // <--- ADAUGĂ ASTA pentru a stoca valoarea la runtime
 
     IdInfo() {}
-    IdInfo(string type, string name, IdKind kind, string value = "") 
+    IdInfo(string type, string name, IdKind kind, string value = "")
         : type(type), name(name), kind(kind), value(value) {}
 };
 
-class SymTable {
+class SymTable
+{
 private:
-    SymTable* parent;
+    SymTable *parent;
     string scopeName;
     map<string, IdInfo> ids;
-    
+    string expectedReturnType;
     // Static map pentru a stoca toate scope-urile claselor (Global storage, dar incapsulat)
-    static map<string, SymTable*> classScopes;
+    static map<string, SymTable *> classScopes;
 
 public:
-    SymTable(string name, SymTable* parent = NULL);
-    
+    SymTable(string name, SymTable *parent = NULL);
+
     // Core methods
     bool existsId(string name);
     // Returneaza false si seteaza mesajul de eroare daca ceva nu e ok
     bool addVar(string type, string name);
     void addFunc(string type, string name);
-    
+
     // Gestionare Parametri
     void updateFuncParams(string name, vector<string> params);
     vector<string> getFuncParams(string name);
 
     // Gestionare Clase
     void addClass(string name);
-    static void addClassScope(string name, SymTable* table);
-    static SymTable* getClassScope(string name);
-    
+    static void addClassScope(string name, SymTable *table);
+    static SymTable *getClassScope(string name);
+
     // Helpers & Type Checking
     string getType(string name);
-    SymTable* getParent();
+    SymTable *getParent();
     string getScopeName();
-    
+
     // Verifica daca membrul exista in clasa si returneaza tipul
     string getMemberType(string objName, string memberName);
-    
+
     // Functii de verificare statice (pentru a nu incarca .y)
     static bool isNumeric(string type);
     static bool isInt(string type);
@@ -65,11 +75,18 @@ public:
     static bool checkTypeCompatibility(string type1, string type2, string op);
 
     // Printing
-    void printTableToFile(const string& filename);
+    void printTableToFile(const string &filename);
 
-    //Pentru Value
+    // Pentru Value
     void setValue(string name, Value v);
     Value getValue(string name);
+
+    IdKind getKind(string name); // Pentru a distinge între VARIABLE și FUNCTION [cite: 20]
+
+    void setExpectedReturnType(std::string type) { expectedReturnType = type; }
+    string getExpectedReturnType();
     
     ~SymTable();
 };
+
+#endif

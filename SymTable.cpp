@@ -3,8 +3,10 @@
 // Initializare membru static
 map<string, SymTable *> SymTable::classScopes;
 
-SymTable::SymTable(string name, SymTable *parent) : scopeName(name), parent(parent) {}
-
+SymTable::SymTable(string name, SymTable *parent) : scopeName(name), parent(parent)
+{
+    expectedReturnType = ""; // Inițial, un scope nu are un tip de return setat
+}
 bool SymTable::addVar(string type, string name)
 {
     if (ids.count(name))
@@ -116,6 +118,9 @@ bool SymTable::isFloat(string type)
 }
 bool SymTable::checkTypeCompatibility(string type1, string type2, string op)
 {
+    if (type1 == type2)
+        return true;
+
     if (type1 == "error" || type2 == "error")
         return false;
 
@@ -196,6 +201,24 @@ Value SymTable::getValue(string name)
         return parent->getValue(name);
     }
     return Value(); // Returnează void/null dacă nu există
+}
+
+IdKind SymTable::getKind(string name)
+{
+    if (ids.count(name))
+        return ids[name].kind;
+    if (parent)
+        return parent->getKind(name);
+    return VARIABLE; // Default
+}
+
+string SymTable::getExpectedReturnType()
+{
+    if (expectedReturnType != "")
+        return expectedReturnType;
+    if (parent != NULL)
+        return parent->getExpectedReturnType();
+    return "";
 }
 
 SymTable::~SymTable() { ids.clear(); }

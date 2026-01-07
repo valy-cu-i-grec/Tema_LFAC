@@ -15,6 +15,7 @@ int function(int x, int y)
 int z;
 float h;
 x:=z;
+return 7;
 }
 
 begin_progr
@@ -26,12 +27,30 @@ varBool := true;
 sirDeCaractere:="Valentin";
 function(3,5);
 numarInt:=numarInt+varBool;
-if( noua.catau==true){ sirDeCaractere:="AmVerificat"; } else sirDeCaractere:="NuAmVerificat";
+if( noua.catau==true){ sirDeCaractere:="AmVerificat"; } else {sirDeCaractere:="NuAmVerificat";};
 
-if(noua.Bomb=="Sexi"){caracter:='S';} else if(noua.Bomb=="sexi"){caracter:='s';} else caracter:='n';
+if(noua.Bomb=="Sexi")
+{
+     caracter:='S';
+} 
+else
+{
+    if(noua.Bomb=="sexi")
+        {
+            caracter:='s';
+        }
+        else 
+        {
+           caracter:='n';
+        };
+};
 
 while(numarInt+1 == 2) { numarInt := numarInt - 1; };
 
-Print(2+3);
+Print(sirDeCaractere);
+Print(5 + 6);
+Print(caracter);
+
+Print(numarInt + function);
 
 end_progr
