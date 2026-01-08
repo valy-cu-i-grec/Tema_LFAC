@@ -1,0 +1,103 @@
+class A {
+    int x;
+    int y;
+    float z;
+
+    int initA() {
+        x := 19;
+        y := 90;
+        return 0;
+    }
+
+    int g(int z) {
+        return zzz * 100;
+    }
+
+    float fl(int x) {
+        if (x == 20) {
+            return 10.0;
+        };
+        return 20.0;
+    }
+};
+
+int f(int z, float x, bool b) {
+    if (b == true && x > 1.0) {
+        return z * 10;
+    };
+    return z;
+}
+
+class B {
+    int b;
+    int bb;
+
+    int initB() {
+        b := 5;
+        bb := 10;
+        return 0;
+    }
+
+    int g(int z) {
+        return z + b;
+    }
+
+    int f_method(int z) {
+        if (z > 4) {
+            int var;
+            var := 0;
+            return var + 5;
+        };
+        return b + bb * z;
+    }
+};
+
+string bfunc(bool b, string s) {
+    if (b == true) {
+        return s;
+    } else {
+        return "bau";
+    };
+}
+
+float fx;
+int x;
+int z;
+string s;
+int ix;
+int ix;
+bool b1;
+bool b2;
+B obb;
+A oba;
+
+begin_progr
+    zzz := 10;
+
+    fx := 65.0;
+    ix := 10;
+    Print(fx - 65.0 + f(10, 10.0, true));
+    fx := fx * 10 + f(10, 10.0, true) + ix;
+    
+    s := "test";
+    b1 := true;
+    b2 := b1;
+    
+    Print(s + b1);
+    b1 := b1 + b2;
+    fx := b1 || b2;
+    
+    oba.initA();
+    obb.initB();
+    
+    oba.x := oba.b + bfunc(b1, s);
+    oba.x := obb.b + fx;
+
+    Print(f(ix, fx, fx));
+    Print(f(ix, fx, true, true));
+
+    oba.f_method(ix);
+    oba.g(fx);
+    oba.z := 100;
+    oba.x := oba.x + oba.fl(ix);
+end_progr

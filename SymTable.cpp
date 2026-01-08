@@ -1,16 +1,15 @@
 #include "SymTable.h"
 
-// Initializare membru static
 map<string, SymTable *> SymTable::classScopes;
 
 SymTable::SymTable(string name, SymTable *parent) : scopeName(name), parent(parent)
 {
-    expectedReturnType = ""; // Inițial, un scope nu are un tip de return setat
+    expectedReturnType = ""; 
 }
 bool SymTable::addVar(string type, string name)
 {
     if (ids.count(name))
-        return false; // Deja exista
+        return false;
     IdInfo var(type, name, VARIABLE);
     ids[name] = var;
     return true;
@@ -33,7 +32,6 @@ bool SymTable::existsId(string name)
 
 void SymTable::updateFuncParams(string name, vector<string> params)
 {
-    // Cautam functia in scope-ul curent (prototip) sau parinti
     if (ids.count(name) && ids[name].kind == FUNCTION)
     {
         ids[name].paramTypes = params;
@@ -96,7 +94,6 @@ string SymTable::getMemberType(string objName, string memberName)
     if (!clsTable)
         return "error_not_class";
 
-    // Cautam membrul in tabela clasei (fara a cauta recursiv in parintii clasei momentan)
     if (clsTable->ids.count(memberName))
     {
         return clsTable->ids[memberName].type;
@@ -200,7 +197,7 @@ Value SymTable::getValue(string name)
     {
         return parent->getValue(name);
     }
-    return Value(); // Returnează void/null dacă nu există
+    return Value();
 }
 
 IdKind SymTable::getKind(string name)
@@ -209,7 +206,7 @@ IdKind SymTable::getKind(string name)
         return ids[name].kind;
     if (parent)
         return parent->getKind(name);
-    return VARIABLE; // Default
+    return VARIABLE; 
 }
 
 string SymTable::getExpectedReturnType()

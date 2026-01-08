@@ -25,7 +25,7 @@ public:
     IdKind kind;
     string value;
     vector<string> paramTypes;
-    Value currentVal; // <--- ADAUGĂ ASTA pentru a stoca valoarea la runtime
+    Value currentVal; 
 
     IdInfo() {}
     IdInfo(string type, string name, IdKind kind, string value = "")
@@ -39,49 +39,39 @@ private:
     string scopeName;
     map<string, IdInfo> ids;
     string expectedReturnType;
-    // Static map pentru a stoca toate scope-urile claselor (Global storage, dar incapsulat)
     static map<string, SymTable *> classScopes;
 
 public:
     SymTable(string name, SymTable *parent = NULL);
 
-    // Core methods
     bool existsId(string name);
-    // Returneaza false si seteaza mesajul de eroare daca ceva nu e ok
     bool addVar(string type, string name);
     void addFunc(string type, string name);
 
-    // Gestionare Parametri
     void updateFuncParams(string name, vector<string> params);
     vector<string> getFuncParams(string name);
 
-    // Gestionare Clase
     void addClass(string name);
     static void addClassScope(string name, SymTable *table);
     static SymTable *getClassScope(string name);
 
-    // Helpers & Type Checking
     string getType(string name);
     SymTable *getParent();
     string getScopeName();
 
-    // Verifica daca membrul exista in clasa si returneaza tipul
     string getMemberType(string objName, string memberName);
 
-    // Functii de verificare statice (pentru a nu incarca .y)
     static bool isNumeric(string type);
     static bool isInt(string type);
     static bool isFloat(string type);
     static bool checkTypeCompatibility(string type1, string type2, string op);
 
-    // Printing
     void printTableToFile(const string &filename);
 
-    // Pentru Value
     void setValue(string name, Value v);
     Value getValue(string name);
 
-    IdKind getKind(string name); // Pentru a distinge între VARIABLE și FUNCTION [cite: 20]
+    IdKind getKind(string name); 
 
     void setExpectedReturnType(std::string type) { expectedReturnType = type; }
     string getExpectedReturnType();

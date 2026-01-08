@@ -12,7 +12,7 @@
 "int"|"float"|"char"|"string"|"bool" { yylval.strVal = new std::string(yytext); return TYPE; }
 "begin_progr" { return BGIN; }
 "end_progr"   { return END; }
-"true"|"false" { yylval.strVal = new std::string(yytext); return BOOL_VAL; } /* Returnam tipul direct */
+"true"|"false" { yylval.strVal = new std::string(yytext); return BOOL_VAL; }
 "Print"       { return PRINT; }
 "class"       { return CLASS; }
 "."           { return DOT; }

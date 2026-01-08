@@ -20,8 +20,6 @@ public:
     ASTNode(std::string name, std::string varType)
         : left(nullptr), right(nullptr), root(name), type(varType)
     {
-        // Folosim Value.type ca un marker intern:
-        // Dacă val.type este "void", înseamnă că e variabilă și trebuie căutată în tabelă.
         this->val.type = "id_marker";
     }
 
@@ -56,10 +54,8 @@ inline Value ASTNode::eval(SymTable *table)
     if (table == nullptr)
         return Value();
 
-    // noduri frunza
     if (!left && !right)
     {
-        // 1. Dacă este un nod "OTHER" (apel funcție/membru clasă)
         if (root == "OTHER")
         {
             if (type == "int")
@@ -67,24 +63,20 @@ inline Value ASTNode::eval(SymTable *table)
             if (type == "float")
                 return Value(0.0f);
             if (type == "string")
-                return Value("OTHER_STR"); // Să returneze un string
+                return Value("OTHER_STR"); 
             if (type == "bool")
                 return Value(false);
             return Value();
         }
 
-        // 2. Dacă este o variabilă (verificăm markerul pus în constructor)
         if (val.type == "id_marker")
         {
             return table->getValue(root);
         }
 
-        // 3. Dacă este o constantă literală (NR, NR_FLOAT, STRING)
-        // În constructorul de constante, val.type va fi "int", "float" etc., NU "id_marker"
         return val;
     }
 
-    // atribuire id:= expr
     if (root == ":=")
     {
         Value rightVal = right->eval(table);
@@ -93,16 +85,14 @@ inline Value ASTNode::eval(SymTable *table)
         return rightVal;
     }
 
-    // Print
     if (root == "PRINT")
     {
         Value result = left->eval(table);
-        result.print(); // Aceasta va apela automat codul tău din Value.h
+        result.print(); 
         std::cout << "\n";
         return result;
     }
 
-    // Operatori
     Value lVal = (left) ? left->eval(table) : Value();
     Value rVal = (right) ? right->eval(table) : Value();
 
@@ -110,7 +100,6 @@ inline Value ASTNode::eval(SymTable *table)
     {
         if (lVal.type == "int")
         {
-            // Caz de calcul întreg
             if (root == "+")
                 return Value(lVal.data.iVal + rVal.data.iVal);
             if (root == "-")
@@ -122,7 +111,6 @@ inline Value ASTNode::eval(SymTable *table)
         }
         else if (lVal.type == "float")
         {
-            // Caz de calcul float
             if (root == "+")
                 return Value(lVal.data.fVal + rVal.data.fVal);
             if (root == "-")
@@ -134,7 +122,6 @@ inline Value ASTNode::eval(SymTable *table)
         }
     }
 
-    // operatorul unar !
     lVal = (left) ? left->eval(table) : Value();
 
     if (root == "!")
@@ -152,7 +139,6 @@ inline Value ASTNode::eval(SymTable *table)
         return Value("bool", true);
     }
 
-    // Operatori de comparație
     if (root == "==")
     {
         if (lVal.type == "int")
@@ -190,7 +176,6 @@ inline Value ASTNode::eval(SymTable *table)
             return Value(lVal.data.fVal > rVal.data.fVal);
     }
 
-    // Operatori booleeni
     if (root == "&&")
         return Value(lVal.data.bVal && rVal.data.bVal);
     if (root == "||")

@@ -20,18 +20,15 @@ public:
 
     std::string sVal;
 
-    // --- ADAUGĂ ACESTE DOUĂ METODE ---
 
-    // 1. Copy Constructor
     Value(const Value &other)
     {
         this->type = other.type;
         this->isUnknown = other.isUnknown;
         this->sVal = other.sVal;
-        this->data = other.data; // Copiază uniunea bit cu bit
+        this->data = other.data;
     }
 
-    // 2. Assignment Operator (Operatorul de atribuire)
     Value &operator=(const Value &other)
     {
         if (this != &other)
@@ -44,9 +41,7 @@ public:
         return *this;
     }
 
-    // ----------------------------------
 
-    // Constructorii tăi existenți rămân la fel
     Value() : type("void"), isUnknown(false) {}
     Value(std::string t, bool unknown) : type(t), isUnknown(unknown) {}
     Value(int v) : type("int"), isUnknown(false) { data.iVal = v; }
