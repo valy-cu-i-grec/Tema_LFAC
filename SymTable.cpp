@@ -4,12 +4,21 @@ map<string, SymTable *> SymTable::classScopes;
 
 SymTable::SymTable(string name, SymTable *parent) : scopeName(name), parent(parent)
 {
-    expectedReturnType = ""; 
+    expectedReturnType = "";
 }
 bool SymTable::addVar(string type, string name)
 {
     if (ids.count(name))
         return false;
+
+    if (parent != nullptr && parent->getScopeName().find("class_") == 0)
+    {
+        if (parent->existsId(name))
+        {
+            return false;
+        }
+    }
+
     IdInfo var(type, name, VARIABLE);
     ids[name] = var;
     return true;
@@ -206,7 +215,7 @@ IdKind SymTable::getKind(string name)
         return ids[name].kind;
     if (parent)
         return parent->getKind(name);
-    return VARIABLE; 
+    return VARIABLE;
 }
 
 string SymTable::getExpectedReturnType()

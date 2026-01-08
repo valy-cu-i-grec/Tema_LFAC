@@ -8,12 +8,18 @@
 %{
 #include <iostream>
 #include <stdio.h>
+#include <fstream>
 #include "SymTable.h"
 using namespace std;
 
 extern int yylex();
+extern FILE* yyin;
+extern int yylineno;
+int yyparse();
+
+SymTable* current; // Definiția variabilei globale mutată aici
+
 void yyerror(const char * s);
-extern SymTable* current; 
 
 void reportError(const char* fmt, std::string s1, std::string s2 = "") {
     char msg[200];
@@ -83,7 +89,7 @@ func_header : TYPE token_id '('
             {
                  current->addFunc(*$1, *$2);
                  current = new SymTable("func_" + *$2, current);
-                 current->setExpectedReturnType(*$1); // Setăm tipul în noul scope
+                 current->setExpectedReturnType(*$1); 
                  $$ = $2;
             }
             ;
@@ -556,4 +562,27 @@ expression : expression '+' expression
                  delete $1; delete $3;
              }
            ;
+
 %%
+
+int main(int argc, char** argv){
+    std::ofstream file("tables.txt");
+    file.close();
+
+    if(argc > 1) yyin=fopen(argv[1],"r");
+    else yyin = stdin;
+     
+    current = new SymTable("global");
+    
+    yyparse();
+     
+    if(current) {
+        current->printTableToFile("tables.txt");
+        delete current;
+    }
+    return 0;
+}
+
+void yyerror(const char * s){
+     std::cout << "Error: " << s << " at line: " << yylineno << std::endl;
+}

@@ -1,53 +1,29 @@
-=== Symbol Table: func_initA ===
-Parent Scope: class_A
------------------------------------
-===================================
-
-=== Symbol Table: func_g ===
-Parent Scope: class_A
------------------------------------
-Name: z | Kind: Variable | Type: int
-===================================
-
-=== Symbol Table: func_fl ===
-Parent Scope: class_A
------------------------------------
-Name: x | Kind: Variable | Type: int
-===================================
-
-=== Symbol Table: class_A ===
+=== Symbol Table: class_Camera ===
 Parent Scope: global
 -----------------------------------
-Name: fl | Kind: Function | RetType: float | Params: (int)
-Name: g | Kind: Function | RetType: int | Params: (int)
-Name: initA | Kind: Function | RetType: int | Params: ()
+Name: Bomb | Kind: Variable | Type: string
+Name: catau | Kind: Variable | Type: bool
+===================================
+
+=== Symbol Table: func_function ===
+Parent Scope: global
+-----------------------------------
+Name: h | Kind: Variable | Type: float
 Name: x | Kind: Variable | Type: int
 Name: y | Kind: Variable | Type: int
-Name: z | Kind: Variable | Type: float
-===================================
-
-=== Symbol Table: func_f ===
-Parent Scope: global
------------------------------------
-Name: b | Kind: Variable | Type: bool
-Name: x | Kind: Variable | Type: float
 Name: z | Kind: Variable | Type: int
 ===================================
 
-=== Symbol Table: func_initB ===
-Parent Scope: class_B
+=== Symbol Table: global ===
+Parent Scope: NULL
 -----------------------------------
-===================================
-
-=== Symbol Table: func_g ===
-Parent Scope: class_B
------------------------------------
-Name: z | Kind: Variable | Type: int
-===================================
-
-=== Symbol Table: func_f_method ===
-Parent Scope: class_B
------------------------------------
-Name: z | Kind: Variable | Type: int
+Name: Camera | Kind: Class
+Name: caracter | Kind: Variable | Type: char
+Name: function | Kind: Function | RetType: int | Params: (int,int)
+Name: noua | Kind: Variable | Type: Camera
+Name: numarFloat | Kind: Variable | Type: float
+Name: numarInt | Kind: Variable | Type: int
+Name: sirDeCaractere | Kind: Variable | Type: string
+Name: varBool | Kind: Variable | Type: bool
 ===================================
 
